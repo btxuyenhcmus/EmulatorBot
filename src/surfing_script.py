@@ -1,6 +1,7 @@
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 
+from .utils import scroll_smooth_to_top, scroll_smooth_to_end
 
 import time
 import random
@@ -17,71 +18,6 @@ def search_google(driver, text):
 
     driver.implicitly_wait(5)
     print("Search Google Ended!")
-
-
-def scroll_smooth_to_end(driver):
-    print("Scroll to end starting...")
-    height = int(driver.execute_script(
-        "return Math.max(document.body.scrollHeight, document.body.offsetHeight, document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight);"))
-    # Set the initial scroll position
-    scroll_position = 0
-
-    # Define the step size for smooth scrolling
-    step = 10
-
-    while scroll_position < height:
-        # Scroll down by the defined step size
-        driver.execute_script(f"window.scrollTo(0, {scroll_position});")
-
-        # Increment the scroll position
-        scroll_position += step
-
-        # Wait for a short time to create a smooth scrolling effect
-        time.sleep(0.1)
-    print("Scroll to end ended!")
-
-
-def scroll_smooth_to_medium(driver, height=None):
-    print("Scroll to medium starting...")
-    height = height or int(driver.execute_script(
-        "return Math.max(document.body.scrollHeight, document.body.offsetHeight, document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight);") / 2)
-    # Set the initial scroll position
-    scroll_position = 0
-
-    # Define the step size for smooth scrolling
-    step = 20
-
-    while scroll_position < height:
-        # Scroll down by the defined step size
-        driver.execute_script(f"window.scrollTo(0, {scroll_position});")
-
-        # Increment the scroll position
-        scroll_position += step
-
-        # Wait for a short time to create a smooth scrolling effect
-        time.sleep(0.1)
-    print("Scroll to end ended!")
-
-
-def scroll_smooth_to_top(driver):
-    print("Scroll to top starting...")
-    # Set the initial scroll position to the bottom of the page
-    scroll_position = int(driver.execute_script(
-        "return Math.max(document.body.scrollHeight, document.body.offsetHeight, document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight);"))
-
-    # Define the step size for smooth scrolling
-    step = -10  # Negative step to scroll up
-
-    while scroll_position > 0:
-        # Scroll up by the defined step size
-        driver.execute_script(f"window.scrollTo(0, {scroll_position});")
-
-        # Decrement the scroll position
-        scroll_position += step
-
-        # Wait for a short time to create a smooth scrolling effect
-        time.sleep(0.1)
-    print("Scroll to top ended!")
 
 
 def click_random_top_result(driver):
@@ -105,14 +41,14 @@ def surfing(driver):
     driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
     time.sleep(5)
     scroll_smooth_to_end(driver)
-    scroll_smooth_to_top(driver)
+    scroll_smooth_to_top(driver, step=-10)
     print("Surfing web ended!")
 
 
 def surfing_script_run(driver):
     search_google(driver, "macys shoes tommy")
-    scroll_smooth_to_end(driver)
-    scroll_smooth_to_top(driver)
+    scroll_smooth_to_end(driver, step=10)
+    scroll_smooth_to_top(driver, step=-10)
     click_random_top_result(driver)
     surfing(driver)
     click_random_page(driver)

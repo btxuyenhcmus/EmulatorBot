@@ -4,6 +4,7 @@ from src.game2048 import game_run
 from src.foxnews import fox_news_run
 from src.surfing_script import surfing_script_run
 from src.surfing_jomashop import surfing_jomashop_run
+from src.surfing_ebay import surfing_ebay_run
 
 import datetime
 import sys

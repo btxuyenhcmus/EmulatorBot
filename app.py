@@ -15,6 +15,10 @@ scripts = [
         'func': 'surfing_jomashop_run'
     },
     {
+        'name': 'Lướt web ebay',
+        'func': 'surfing_ebay_run'
+    },
+    {
         'name': 'Chơi game 2048',
         'func': 'game_run'
     },
@@ -42,6 +46,7 @@ def run_script(func):
     subprocess.call(
         ['python3', 'main.py', func, profile_id, folder_id], bufsize=0)
     return 'Done 1 script on background.'
+
 
 @app.route('/refresh')
 def refresh():
