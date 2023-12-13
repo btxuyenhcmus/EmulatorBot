@@ -21,7 +21,7 @@ function runScript(scriptName) {
     outputElement.innerText = "Running";
 
     fetch(
-      `/runv1/${scriptName}?profile=${activeProfileId}&folder=${activeFolderId}`
+      `/run/${scriptName}?profile=${activeProfileId}&folder=${activeFolderId}`
     )
       .then((response) => {
         if (!response.ok) {
@@ -42,4 +42,8 @@ function runScript(scriptName) {
   } else {
     alert("Please select a profile.");
   }
+}
+
+function runRefresh() {
+  fetch("/refresh").then((data) => location.reload());
 }

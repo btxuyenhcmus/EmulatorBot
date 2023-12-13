@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-from drivers.multilogindriver import profile_search
+from drivers.multilogindriver import profile_search, signin
 import subprocess
 
 app = Flask(__name__)
@@ -27,28 +27,26 @@ scripts = [
 
 @app.route('/')
 def index():
-    profiles = profile_search()
+    try:
+        profiles = profile_search()
+    except Exception as e:
+        profiles = []
     return render_template('index.html', scripts=scripts, profiles=profiles)
 
 
-@app.route('/run/<script_name>')
-def run_script(script_name):
-    script_path = 'main.py'
-    if script_path:
-        subprocess.Popen(['python3', script_path], bufsize=0)
-        return f'Started running {script_name} in the background.'
-    else:
-        return f'Script {script_name} not found.'
-
-
-@app.route('/runv1/<func>')
-def runv1_script(func):
+@app.route('/run/<func>')
+def run_script(func):
     args = request.args
     profile_id = args['profile']
     folder_id = args['folder']
     subprocess.call(
         ['python3', 'main.py', func, profile_id, folder_id], bufsize=0)
     return 'Done 1 script on background.'
+
+@app.route('/refresh')
+def refresh():
+    signin()
+    return 'Refresh done.'
 
 
 if __name__ == '__main__':
