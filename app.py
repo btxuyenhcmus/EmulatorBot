@@ -11,6 +11,10 @@ scripts = [
         'func': 'surfing_script_run'
     },
     {
+        'name': 'Lướt web macys',
+        'func': 'surfing_macys_run'
+    },
+    {
         'name': 'Lướt web jomashop',
         'func': 'surfing_jomashop_run'
     },
