@@ -51,8 +51,7 @@ def start_profile(ChromiumOptions, profile_id, folder_id) -> webdriver:
         print(f'\nError while starting profile: {r.text}\n')
     else:
         print(f'\nProfile {profile_id} started.\n')
-
-        selenium_port = response.get('status').get('message')
+        selenium_port = response.get('data').get('port')
         driver = webdriver.Remote(
             command_executor=f'{LOCALHOST}:{selenium_port}', options=ChromiumOptions)
 
