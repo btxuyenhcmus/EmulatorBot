@@ -1,5 +1,6 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+
 *.pyc
 *.pyo
 *.pyd
@@ -25,6 +26,7 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+migrations
 
 # Installer logs
 pip-log.txt
@@ -66,3 +68,4 @@ docs/_build/
 # PyBuilder
 target
 .env
+

@@ -42,9 +42,9 @@ def profile_search():
     return response.get('data').get('profiles', [])
 
 
-def start_profile(ChromiumOptions, profile_id, folder_id,host) -> webdriver:
+def start_profile(ChromiumOptions, profile_id, folder_id,host,token) -> webdriver:
     r = requests.get(
-        f'{MLX_LAUNCHER}/profile/f/{folder_id}/p/{profile_id}/start?automation_type=selenium', headers=HEADERS)
+        f'{MLX_LAUNCHER}/profile/f/{folder_id}/p/{profile_id}/start?automation_type=selenium', headers={"Authorization": f'Bearer {token}'})
 
     response = r.json()
 
@@ -58,20 +58,19 @@ def start_profile(ChromiumOptions, profile_id, folder_id,host) -> webdriver:
         return driver
 
 
-def stop_profile(profile_id) -> None:
+def stop_profile(profile_id,token) -> None:
     r = requests.get(
-        f'{MLX_LAUNCHER}/profile/stop/p/{profile_id}', headers=HEADERS)
-
+        f'https://launcher.mlx.yt:45001/api/v1/profile/stop/p/{profile_id}', headers={"Authorization": f'Bearer {token}'})
     if (r.status_code != 200):
         print(f'\nError while stopping profile: {r.text}\n')
     else:
         print(f'\nProfile {profile_id} stopped.\n')
 
 
-def setDriver(profile_id, folder_id, host):
+def setDriver(profile_id, folder_id, host,token):
     # Initializing Chrome Options from the Webdriver
     options = webdriver.ChromeOptions()
 
-    driver = start_profile(options, profile_id, folder_id,host)
+    driver = start_profile(options, profile_id, folder_id,host,token)
     driver.maximize_window()
     return driver

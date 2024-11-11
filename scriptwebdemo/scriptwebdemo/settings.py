@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'scriptwebdemo.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'script_web',
+        'NAME': 'script_db',
         'USER': 'postgres',
         'PASSWORD': '123456',
         'HOST': 'localhost',
