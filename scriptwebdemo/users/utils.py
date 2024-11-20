@@ -1,5 +1,6 @@
 import time
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
 
 
 def search_google(driver, url):
@@ -11,6 +12,13 @@ def watch_video(driver, url):
     print("Start watch video " + url)
     driver.implicitly_wait(5)
     driver.get(url)
+    click_using_css_selector(
+        driver, css_selector='button.ytp-play-button')
+
+
+def click_using_css_selector(driver, css_selector):
+    element = driver.find_element(By.CSS_SELECTOR, css_selector)
+    ActionChains(driver).click(element).perform()
 
 
 def click_position(driver, x, y):

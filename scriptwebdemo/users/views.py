@@ -1,25 +1,31 @@
-from django.shortcuts import render, redirect
+from .models import Script, ScriptStep
+from django.shortcuts import get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
-from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import login as auth_login, authenticate, logout as auth_logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from .forms import CustomUserCreationForm, MultiLoginForm
+from .forms import CustomUserCreationForm, MultiLoginForm, CustomLoginForm
 from .models import MultiloginAccount, Action, Script, ScriptStep
 from .multilogindriver import signin, profile_search
 from django.contrib import messages
 import datetime
 import sys
+from uuid import UUID
 import json
+import asyncio
+from asgiref.sync import sync_to_async
 from .multilogindriver import setDriver as multiloginSetDriver, stop_profile as multiloginDestroyDriver
 from .utils import *
 
 
 def home(request):
-    user = request.user
-    scripts = get_script(user)
-    print(scripts)
     multilogin_accounts = []
-    if user.is_authenticated:
+    scripts = []
+    actions = []
+    if request.user.is_authenticated:
+        scripts = get_script(request)
+        print(scripts)
         multilogin_accounts = MultiloginAccount.objects.filter(
             user=request.user).values()
         actions = Action.objects.all().values()
@@ -29,7 +35,7 @@ def home(request):
 
 def login(request):
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
+        form = CustomLoginForm(request, data=request.POST)
         if form.is_valid():
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
@@ -38,7 +44,7 @@ def login(request):
                 auth_login(request, user)
                 return redirect('home')
     else:
-        form = AuthenticationForm()
+        form = CustomLoginForm()
     return render(request, 'login.html', {'form': form})
 
 
@@ -153,9 +159,9 @@ def create_script(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
 
-def get_script(user):
+def get_script(request):
     scripts_info = []
-    scripts = Script.objects.filter(user=user)
+    scripts = Script.objects.filter(user=request.user)
     for script in scripts:
         steps = ScriptStep.objects.filter(script=script)
         script_info = {
@@ -166,7 +172,7 @@ def get_script(user):
         for step in steps:
             script_info['steps'].append({
                 'step_order': step.step_order,
-                'action': step.action,
+                'action': step.action.name,
                 'parameters': step.parameters,
                 'created': step.created.strftime("%d/%m/%Y")
 
@@ -176,16 +182,24 @@ def get_script(user):
     return scripts_info
 
 
+def fetch_scripts(request):
+    if request.method == 'GET':
+        if request.user.is_authenticated:
+            scripts = get_script(request)
+            return JsonResponse({'scripts': scripts})
+        else:
+            return JsonResponse({'error': 'User not authenticated'}, status=401)
+
+
 def run_script(request, scriptId):
     multilogin_accounts = MultiloginAccount.objects.filter(
         user=request.user).values()
     email = multilogin_accounts[0]['multilogin_email'] if multilogin_accounts else ''
     password = multilogin_accounts[0]['multilogin_password'] if multilogin_accounts else ''
     token = signin(email, password)
+    host = request.GET['host']
     profile_id = request.GET['profile_id']
     folder_id = multilogin_accounts[0]['multilogin_folder_id']
-    # token = multilogin_accounts[0]['multilogin_token']
-    host = request.GET['host']
     start = datetime.datetime.now()
     driver = multiloginSetDriver(profile_id, folder_id, host, token)
     driver.get('https://www.google.com')
@@ -226,6 +240,10 @@ def run_script(request, scriptId):
                 int(scriptStep.parameters['x_position']),
                 int(scriptStep.parameters['y_position'])
             ) or time.sleep(int(scriptStep.parameters['delay'])),
+            'click': lambda scriptStep, func: func(
+                driver,
+                scriptStep.parameters['css_selector']
+            ) or time.sleep(int(scriptStep.parameters['delay'])),
         }
 
         for scriptStep in scriptSteps:
@@ -250,3 +268,44 @@ def run_script(request, scriptId):
         'end_time': str(end),
         'execution_time': str(executionTime)
     })
+
+
+# def run_script_for_multiple_profile(request, scriptId):
+#     multilogin_accounts = MultiloginAccount.objects.filter(
+#         user=request.user).values()
+#     email = multilogin_accounts[0]['multilogin_email'] if multilogin_accounts else ''
+#     password = multilogin_accounts[0]['multilogin_password'] if multilogin_accounts else ''
+#     folder_id = multilogin_accounts[0]['multilogin_folder_id']
+#     token = signin(email, password)
+#     profile_ids_str = request.GET.get('profile_ids', '')
+
+#     if profile_ids_str:
+#         profile_ids_list = profile_ids_str.split(',')
+#         profile_ids_list = [
+#             profile_id for profile_id in profile_ids_list if is_valid_uuid(profile_id)]
+#         print(profile_ids_list)
+#     host = request.GET['host']
+#     # if request.method != "POST":
+#     #     return JsonResponse({'error': 'Invalid request method'}, status=405)
+#     try:
+#         tasks = [
+#             run_script(profile_id, folder_id, host, token, scriptId)
+#             for profile_id in profile_ids_list
+#         ]
+#         results = asyncio.gather(*tasks)
+#         return JsonResponse({'status': 'success', 'results': results})
+#     except Exception as e:
+#         return JsonResponse({'error': str(e)}, status=500)
+
+
+def delete_script(request, scriptId):
+    if request.method == "POST":
+        try:
+            script = get_object_or_404(Script, id=scriptId, user=request.user)
+            script.steps.all().delete()
+            script.delete()
+            return JsonResponse({'success': True, 'message': 'Delete script success'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    else:
+        return JsonResponse({'success': False, 'message': 'Unsupport'})

@@ -10,5 +10,9 @@ urlpatterns = [
     path('change-password/', views.change_password, name='change_password'),
     path('multilogin/', views.multilogin, name='multilogin'),
     path('create-script/', views.create_script, name='create_script'),
-    path('multilogin/run/<int:scriptId>', views.run_script, name='run_script'),
+    path('multilogin/run/<int:scriptId>', views.run_script,
+         name='run_script'),
+    path('fetch-scripts/', views.fetch_scripts, name='fetch_scripts'),
+    path('delete-script/<int:scriptId>',
+         views.delete_script, name='delete_script')
 ]

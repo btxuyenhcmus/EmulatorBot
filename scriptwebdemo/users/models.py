@@ -31,7 +31,8 @@ class Action(models.Model):
         ('scroll_up', 'Cuộn lên'),
         ('scroll_down', 'Cuộn xuống'),
         ('watch_video', 'Xem Video'),
-        ('click_position', 'Click vào vị trí bất kỳ'),
+        ('click_position', 'Click vào vị trí bất kỳ (x,y)'),
+        ('click', 'Click chọn (css_selectors)'),
         ('scroll_start', 'Cuộn đến đầu trang'),
         ('scroll_end', 'Cuộn đến cuối trang'),
     ]
@@ -55,10 +56,11 @@ class Script(models.Model):
 
 
 class ScriptStep(models.Model):
-    script = models.ForeignKey(Script, on_delete=models.CASCADE)
-    action = models.ForeignKey(Action, on_delete=models.CASCADE)
+    script = models.ForeignKey(
+        Script, on_delete=models.CASCADE, related_name='steps')
+    action = models.ForeignKey(Action, on_delete=models.SET_NULL, null=True)
     step_order = models.IntegerField()
     # delay = models.IntegerField(default=10)
     # status = models.BooleanField(default=True)
     parameters = models.JSONField()  # Store action-specific parameters here
-    created = models.DateTimeField(default=datetime.now(), blank=True)
+    created = models.DateTimeField(auto_now_add=True)

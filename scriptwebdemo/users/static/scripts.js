@@ -1,5 +1,6 @@
 let step = 1;
 let scriptSteps = [];
+let selectedProfiles = [];
 function runScript(scriptId) {
   const hostInput = document.getElementById("host-input");
   const host = hostInput.value;
@@ -13,14 +14,7 @@ function runScript(scriptId) {
     alert("Please enter a HOST.");
     return;
   }
-
-  // const outputElement = document.getElementById(`${scriptName}-output`);
-  // outputElement.innerText = "Running";
-
-  const url = new URL(
-    `api/multilogin/run/${scriptId}`,
-    window.location.origin
-  );
+  const url = new URL(`api/multilogin/run/${scriptId}`, window.location.origin);
   url.searchParams.append("host", host);
   url.searchParams.append("profile_id", profileId);
   // url.searchParams.append('folder_id', folderId);
@@ -32,27 +26,18 @@ function runScript(scriptId) {
       }
       return response.json();
     })
-    // .then((data) => {
-    //   if (data.error) {
-    //     outputElement.innerText = `Error: ${data.error}`;
-    //   } else {
-    //     outputElement.innerText = data.output;
-    //   }
-    // })
     .catch((error) => {
       console.error(error);
-      // outputElement.innerText = "Error running the script: " + error.message;
-    })
-    // .finally(() => {
-    //   // outputElement.style.display = "block";
-    // });
+    });
 }
 
 function createScript() {
   const scriptName = document.getElementById("script-name").value;
-  let scriptId;
-  let steps=[]
-    
+  let steps = [];
+  if (!scriptName) {
+    alert("Please enter a script name.");
+    returns
+  }
   for (let index = 1; index <= step; index++) {
     const actionSelect = document.getElementById(`action-select-${index}`);
     if (actionSelect == null) {
@@ -71,14 +56,14 @@ function createScript() {
     });
     if (!selectedActionId) {
       alert("Please select an action for step " + index);
+      return;
     } else {
       const step = {
-        // script_id: scriptId,
         step_order: index,
         action_id: selectedActionId,
         parameters: parameters,
       };
-      steps.push(step)
+      steps.push(step);
     }
   }
   fetch("create-script/", {
@@ -87,13 +72,15 @@ function createScript() {
       "Content-Type": "application/json",
       "X-CSRFToken": getCookie("csrftoken"),
     },
-    body: JSON.stringify({scriptName,steps})
+    body: JSON.stringify({ scriptName, steps }),
   })
     .then((response) => response.json())
     .then((data) => {
       if (data.status === "success") {
-        // scriptId = data.script_id;
-        // console.log("Script ID:", scriptId);
+        reloadScripts();
+        $("#createScriptModal").modal("hide");
+        // document.getElementById("createScriptForm").reset();
+        // Optionally, reset the form
       } else {
         console.error("Error:", data.message);
       }
@@ -101,7 +88,7 @@ function createScript() {
     .catch((error) => {
       console.error("Error:", error);
     });
-  console.log(steps)
+  console.log(steps);
 }
 function runRefresh() {
   fetch("/refresh").then((data) => location.reload());
@@ -113,10 +100,9 @@ function showParameters(step) {
     `parameters-container-${step}`
   );
   const parametersForm = document.getElementById(`parameters-form-${step}`);
-  // console.log(selectedAction);
 
   // Clear previous parameters
-   parametersForm.innerHTML = "";
+  parametersForm.innerHTML = "";
   parametersContainer.style.display = "none";
   if (selectedAction) {
     parametersContainer.style.display = "block";
@@ -157,6 +143,11 @@ function showParameters(step) {
           '<div class="form-inline mb-2"><label for="y_position">Y Position:</label><input type="number" class="form-control" name="y_position" required /></div>' +
           '<div class="form-inline mb-2"><label for="delay">Delay:</label><input type="number" class="form-control" name="delay" required /></div>';
         break;
+      case "click":
+        parametersHtml +=
+          '<div class="form-inline mb-2"><label for="css_selector">CSS_Selector:</label><input type="text" class="form-control" name="css_selector" required /></div>' +
+          '<div class="form-inline mb-2"><label for="delay">Delay:</label><input type="number" class="form-control" name="delay" required /></div>';
+        break;
       default:
         break;
     }
@@ -195,47 +186,6 @@ function removeSelect(button) {
   const selectDiv = button.parentElement;
   selectDiv.remove();
 }
-// function removeSelect(button) {
-//   // Tìm bước cha chứa nút bấm
-//   const stepDiv = button.parentElement;
-//   const stepsContainer = document.getElementById("select-container");
-
-//   // Xóa bước hiện tại
-//   stepsContainer.removeChild(stepDiv);
-
-//   // Cập nhật lại thứ tự các bước
-//   const remainingSteps = stepsContainer.children;
-//   for (let index = 0; index < remainingSteps.length; index++) {
-//     const currentStepDiv = remainingSteps[index];
-//     // Cập nhật số thứ tự hiển thị
-//     const stepNumber = index + 1; // Bắt đầu từ 1
-//     currentStepDiv.querySelector("p").innerText = stepNumber;
-
-//     // Cập nhật ID cho select
-//     const actionSelect = currentStepDiv.querySelector("select");
-//     actionSelect.id = `action-select-${stepNumber}`;
-//     // Cập nhật hàm onchange
-//     actionSelect.setAttribute("onchange", `showParameters(${stepNumber})`);
-//     // Cập nhật ID cho parameters-container
-//     const parametersContainer = currentStepDiv.querySelector(
-//       `parameters-container-${stepNumber}`
-//     );
-//     if (parametersContainer) {
-//       parametersContainer.id = `parameters-container-${stepNumber}`;
-//     }
-
-//     // Cập nhật ID cho parameters-form
-//     const parametersForm = currentStepDiv.querySelector(
-//       `parameters-form-${stepNumber + 1}`
-//     );
-//     if (parametersForm) {
-//       parametersForm.id = `parameters-form-${stepNumber}`;
-//     }
-//   }
-
-//   // Giảm bước nếu cần
-//   step--;
-// }
 // Function to get CSRF token
 function getCookie(name) {
   let cookieValue = null;
@@ -252,5 +202,69 @@ function getCookie(name) {
   }
   return cookieValue;
 }
+function reloadScripts() {
+  fetch("fetch-scripts/", {
+      method: "GET",
+      headers: {
+          "Content-Type": "application/json",
+      },
+  })
+  .then((response) => response.json())
+  .then((data) => {
+      updateTable(data.scripts);
+  })
+  .catch((error) => {
+      console.error("Error:", error);
+  });
+}
 
+function updateTable(scripts) {
+  const tableBody = document.getElementById("scriptsTableBody");
+  tableBody.innerHTML = "";
 
+  scripts.forEach(script => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+          <td>${script.name}</td>
+          <td>${script.steps[0].created}</td>
+          <td>${script.steps.length}</td>
+          <td>
+              <button type="button" class="btn btn-light" onclick="runScript('${script.id}')"><i class="fa-solid fa-play" style="color: #2ce24a;"></i></button>
+               <button type="button" class="btn btn-light" onclick="editScript('${script.id}')"><i class="fa-solid fa-pen-to-square"></i></button>
+            <button type="button" class="btn btn-light" onclick="deleteScript('${script.id}')"><i class="fa-solid fa-trash" style="color: #d9172a;"></i></button>
+          </td>
+      `;
+      tableBody.appendChild(row);
+  });
+}
+function deleteScript(scriptId) {
+  fetch(`delete-script/${scriptId}`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCookie('csrftoken'), // Đảm bảo gửi CSRF token
+      'Content-Type': 'application/json',
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        alert(data.message);
+        // Xóa script khỏi bảng
+        reloadScripts();
+      } else {
+        alert(`Lỗi: ${data.message}`);
+      }
+    })
+    .catch((error) => console.error('Error:', error));
+}
+function updateSelectedProfiles() {
+ selectedProfiles = [];
+  document.querySelectorAll('.form-check-input:checked').forEach((checkbox) => {
+    const profileId = checkbox.value;
+    if (!selectedProfiles.includes(profileId)) {
+      selectedProfiles.push(profileId); // Only add if it doesn't exist in the array
+    }
+  });
+
+  console.log('Selected Profiles:', selectedProfiles); // Hiển thị danh sách ID đã chọn
+}
