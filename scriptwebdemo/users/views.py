@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import login as auth_login, authenticate, logout as auth_logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from .forms import CustomUserCreationForm, MultiLoginForm, CustomLoginForm
+from .forms import CustomUserCreationForm, MultiLoginForm, CustomLoginForm, User
 from .models import MultiloginAccount, Action, Script, ScriptStep
 from .multilogindriver import signin, profile_search
 from django.contrib import messages
@@ -25,7 +25,6 @@ def home(request):
     actions = []
     if request.user.is_authenticated:
         scripts = get_script(request)
-        print(scripts)
         multilogin_accounts = MultiloginAccount.objects.filter(
             user=request.user).values()
         actions = Action.objects.all().values()
@@ -43,6 +42,9 @@ def login(request):
             if user is not None:
                 auth_login(request, user)
                 return redirect('home')
+        else:
+            print(form.errors)
+            return render(request, 'login.html', {'form': form})
     else:
         form = CustomLoginForm()
     return render(request, 'login.html', {'form': form})
@@ -52,8 +54,18 @@ def signup(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('home')
+            email = form.cleaned_data.get('email')
+            if User.objects.filter(email=email).exists():
+                form.add_error('email', 'email already exists')
+            else:
+                form.save()
+                password = form.cleaned_data.get('password1')
+                user = authenticate(request, email=email, password=password)
+                if user is not None:
+                    auth_login(request, user)
+                    return redirect('home')
+        else:
+            messages.error(request, 'Invalid form')
     else:
         form = CustomUserCreationForm()
     return render(request, 'signup.html', {'form': form})
@@ -139,14 +151,22 @@ def create_script(request):
 
         try:
             data = json.loads(request.body)
+            script_id = data.get('scriptId')
             script_name = data.get('scriptName')
             steps = data.get('steps')
-            new_script = Script.objects.create(
-                name=script_name, user=request.user)
-            new_script.save()
+            if script_id:
+                script = Script.objects.get(id=script_id, user=request.user)
+                script.name = script_name
+                script.save()
+                ScriptStep.objects.filter(
+                    script=script).delete()  # Xóa các bước cũ
+            else:
+                script = Script.objects.create(
+                    name=script_name, user=request.user)
+
             for step in steps:
                 new_script_step = ScriptStep.objects.create(
-                    script=new_script,
+                    script=script,
                     action=Action.objects.get(pk=step['action_id']),
                     step_order=step['step_order'],
                     parameters=step['parameters']
@@ -182,6 +202,31 @@ def get_script(request):
     return scripts_info
 
 
+def get_script_by_id(request, script_id):
+    try:
+        script = Script.objects.get(id=script_id, user=request.user)
+        steps = ScriptStep.objects.filter(script=script).order_by('step_order')
+
+        steps_data = [
+            {
+                'step_order': step.step_order,
+                'action': step.action.action_type,
+                'parameters': step.parameters,
+            }
+            for step in steps
+        ]
+
+        script_data = {
+            'id': script.id,
+            'name': script.name,
+            'steps': steps_data,
+        }
+
+        return JsonResponse({'success': True, 'script': script_data}, status=200)
+    except Script.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Script not found!'}, status=404)
+
+
 def fetch_scripts(request):
     if request.method == 'GET':
         if request.user.is_authenticated:
@@ -191,7 +236,7 @@ def fetch_scripts(request):
             return JsonResponse({'error': 'User not authenticated'}, status=401)
 
 
-def run_script(request, scriptId):
+def run_script(request, script_id):
     multilogin_accounts = MultiloginAccount.objects.filter(
         user=request.user).values()
     email = multilogin_accounts[0]['multilogin_email'] if multilogin_accounts else ''
@@ -205,7 +250,7 @@ def run_script(request, scriptId):
     driver.get('https://www.google.com')
     try:
         scriptSteps = ScriptStep.objects.filter(
-            script_id=scriptId
+            script_id=script_id
         ).order_by('step_order')
 
         action_handlers = {
@@ -298,10 +343,10 @@ def run_script(request, scriptId):
 #         return JsonResponse({'error': str(e)}, status=500)
 
 
-def delete_script(request, scriptId):
+def delete_script(request, script_id):
     if request.method == "POST":
         try:
-            script = get_object_or_404(Script, id=scriptId, user=request.user)
+            script = get_object_or_404(Script, id=script_id, user=request.user)
             script.steps.all().delete()
             script.delete()
             return JsonResponse({'success': True, 'message': 'Delete script success'})

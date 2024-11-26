@@ -86,6 +86,7 @@
           type="button"
           class="mt-4 btn btn-primary"
           data-toggle="modal"
+          onclick="openCreateScriptModal()"
           data-target="#createScriptModal"
         >
           Tạo Kịch Bản
@@ -116,6 +117,7 @@
             </div>
             <div class="modal-body">
               <form id="createScriptForm">
+                <input type="hidden" id="script-id" value="">
                 <div class="form-group">
                   <label for="script-name">Tên Kịch Bản</label>
                   <input

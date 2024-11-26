@@ -33,10 +33,12 @@ function runScript(scriptId) {
 
 function createScript() {
   const scriptName = document.getElementById("script-name").value;
+  const scriptId = document.getElementById("script-id").value;
+  console.log(scriptId)
   let steps = [];
   if (!scriptName) {
     alert("Please enter a script name.");
-    returns
+    returns;
   }
   for (let index = 1; index <= step; index++) {
     const actionSelect = document.getElementById(`action-select-${index}`);
@@ -72,7 +74,7 @@ function createScript() {
       "Content-Type": "application/json",
       "X-CSRFToken": getCookie("csrftoken"),
     },
-    body: JSON.stringify({ scriptName, steps }),
+    body: JSON.stringify({ scriptId, scriptName, steps }),
   })
     .then((response) => response.json())
     .then((data) => {
@@ -202,29 +204,88 @@ function getCookie(name) {
   }
   return cookieValue;
 }
+function editScript(scriptId) {
+  fetch(`fetch-script-by-id/${scriptId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        document.getElementById("script-id").value = scriptId;
+        // Điền thông tin kịch bản vào modal
+        document.getElementById("script-name").value = data.script.name;
+        const stepsContainer = document.getElementById("select-container");
+        stepsContainer.innerHTML = ""; // Xóa tất cả bước hiện tại
+        step = 0; // Reset bước
+
+        data.script.steps.forEach((scriptStep) => {
+          step++;
+          const newStep = document.createElement("div");
+          newStep.className = "form-inline mb-3";
+          newStep.innerHTML = `
+            <p class="mt-3 mr-2">${step}</p>
+            <select id="action-select-${step}" class="form-control" onchange="showParameters(${step})">
+              ${actionChoices
+                .map(
+                  (choice) =>
+                    `<option value="${choice.value}" action-id="${choice.id}" ${
+                      choice.value === scriptStep.action ? "selected" : ""
+                    }>${choice.display}</option>`
+                )
+                .join("")}
+            </select>
+            <button class="form-control ml-2" type="button" onclick="removeSelect(this)">Xoá</button>
+            <div id="parameters-container-${step}" style="display: block;">
+              <div id="parameters-form-${step}" class="mb-2 mt-2">
+                ${Object.keys(scriptStep.parameters)
+                  .map(
+                    (key) =>
+                      `<div class="form-inline mb-2">
+                         <label for="${key}">${key}:</label>
+                         <input type="text" class="form-control" name="${key}" value="${scriptStep.parameters[key]}" required />
+                       </div>`
+                  )
+                  .join("")}
+              </div>
+            </div>`;
+          stepsContainer.appendChild(newStep);
+        });
+
+        // Hiển thị modal chỉnh sửa
+        $("#createScriptModal").modal("show");
+      } else {
+        alert("Không thể tải dữ liệu kịch bản!");
+      }
+    })
+    .catch((error) => console.error("Error:", error));
+}
+
 function reloadScripts() {
   fetch("fetch-scripts/", {
-      method: "GET",
-      headers: {
-          "Content-Type": "application/json",
-      },
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
   })
-  .then((response) => response.json())
-  .then((data) => {
+    .then((response) => response.json())
+    .then((data) => {
       updateTable(data.scripts);
-  })
-  .catch((error) => {
+    })
+    .catch((error) => {
       console.error("Error:", error);
-  });
+    });
 }
 
 function updateTable(scripts) {
   const tableBody = document.getElementById("scriptsTableBody");
   tableBody.innerHTML = "";
 
-  scripts.forEach(script => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
+  scripts.forEach((script) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
           <td>${script.name}</td>
           <td>${script.steps[0].created}</td>
           <td>${script.steps.length}</td>
@@ -234,15 +295,15 @@ function updateTable(scripts) {
             <button type="button" class="btn btn-light" onclick="deleteScript('${script.id}')"><i class="fa-solid fa-trash" style="color: #d9172a;"></i></button>
           </td>
       `;
-      tableBody.appendChild(row);
+    tableBody.appendChild(row);
   });
 }
 function deleteScript(scriptId) {
   fetch(`delete-script/${scriptId}`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'X-CSRFToken': getCookie('csrftoken'), // Đảm bảo gửi CSRF token
-      'Content-Type': 'application/json',
+      "X-CSRFToken": getCookie("csrftoken"), // Đảm bảo gửi CSRF token
+      "Content-Type": "application/json",
     },
   })
     .then((response) => response.json())
@@ -255,16 +316,33 @@ function deleteScript(scriptId) {
         alert(`Lỗi: ${data.message}`);
       }
     })
-    .catch((error) => console.error('Error:', error));
+    .catch((error) => console.error("Error:", error));
 }
 function updateSelectedProfiles() {
- selectedProfiles = [];
-  document.querySelectorAll('.form-check-input:checked').forEach((checkbox) => {
+  selectedProfiles = [];
+  document.querySelectorAll(".form-check-input:checked").forEach((checkbox) => {
     const profileId = checkbox.value;
     if (!selectedProfiles.includes(profileId)) {
       selectedProfiles.push(profileId); // Only add if it doesn't exist in the array
     }
   });
 
-  console.log('Selected Profiles:', selectedProfiles); // Hiển thị danh sách ID đã chọn
+  console.log("Selected Profiles:", selectedProfiles); // Hiển thị danh sách ID đã chọn
+}
+function resetCreateScriptForm() {
+  document.getElementById('createScriptForm').reset(); // Reset form
+    const stepsContainer = document.getElementById('select-container');
+    
+    // Giữ lại bước 1
+    if (stepsContainer.children.length > 0) {
+        // Chỉ xóa các bước từ bước 2 trở đi
+        while (stepsContainer.children.length > 1) {
+            stepsContainer.removeChild(stepsContainer.lastChild);
+        }
+    }
+    step = 1; 
+}
+function openCreateScriptModal() {
+  resetCreateScriptForm();
+  $('#createScriptModal').modal('show');
 }
