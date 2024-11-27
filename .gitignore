@@ -27,6 +27,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 migrations
+.DS_Store
 
 # Installer logs
 pip-log.txt
