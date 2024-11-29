@@ -29,7 +29,10 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-migrations
+*/*/migrations/*
+!*/*/migrations/__init__.py
+*/migrations/*
+!*/migrations/__init__.py
 .DS_Store
 
 # Installer logs

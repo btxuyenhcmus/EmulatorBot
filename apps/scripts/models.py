@@ -16,7 +16,7 @@ class Script(models.Model):
 class ScriptStep(models.Model):
     script = models.ForeignKey(
         Script, on_delete=models.CASCADE, related_name='steps')
-    action = models.CharField()
+    action = models.CharField(max_length=255)
     step_order = models.IntegerField()
     parameters = models.JSONField()
     created = models.DateTimeField(auto_now_add=True)

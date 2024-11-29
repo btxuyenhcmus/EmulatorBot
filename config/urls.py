@@ -16,13 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from apps.users.views import home
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', home, name='home'),
-    path('user/', include('apps.users.urls')),
-    path('script/', include('apps.scripts.urls')),
-    path('multilogin/', include('apps.multilogin.urls')),
+
+    # auth urls
+    path("", include("auth.urls")),
+    # path('', home, name='home'),
+    # path('user/', include('apps.users.urls')),
+    # path('script/', include('apps.scripts.urls')),
+    # path('multilogin/', include('apps.multilogin.urls')),
 ]
