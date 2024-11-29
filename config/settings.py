@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'auth.apps.AuthConfig',
-    'apps.dashboards',
+    'apps.multilogin',
 ]
 
 MIDDLEWARE = [
@@ -210,3 +210,10 @@ SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_AGE = 3600
 
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_ORIGINS', '*').split(',')
+
+# Session
+# ------------------------------------------------------------------------------
+
+MLX_BASE = os.environ.get('MLX_BASE')
+MLX_LAUNCHER = os.environ.get('MLX_LAUNCHER')
+LOCALHOST = os.environ.get('MLX_LOCALHOST')

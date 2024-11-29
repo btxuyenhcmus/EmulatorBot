@@ -24,8 +24,8 @@ urlpatterns = [
     # auth urls
     path("", include("auth.urls")),
 
-    # Dashboard urls
-    path("", include("apps.dashboards.urls")),
+    # Multilogin urls
+    path("", include("apps.multilogin.urls")),
     # path('', home, name='home'),
     # path('user/', include('apps.users.urls')),
     # path('script/', include('apps.scripts.urls')),

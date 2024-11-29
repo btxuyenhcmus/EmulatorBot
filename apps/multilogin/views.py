@@ -1,50 +1,60 @@
-from django.shortcuts import render, redirect
-from .multilogindriver import signin, profile_search
-from .forms import MultiloginForm
-from .models import MultiloginAccount
+# === django import === #
+from django.views import View
+from django.views.generic import TemplateView
+from django.http import HttpRequest, JsonResponse
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
+
+# === app import === #
+from apps.multilogin.forms import MultiloginForm
+from apps.multilogin.models import Account, Profile
+from apps.multilogin.heplers import signin, profile_search
+from web_project import TemplateLayout
+from web_project.template_helpers.theme import TemplateHelper
 
 
-@login_required
-def login(request):
-    if request.method == 'POST':
+class LoginView(View):
+    def post(self, request: HttpRequest, *args, **kwargs):
         form = MultiloginForm(request.POST)
         if form.is_valid():
-            email = form.cleaned_data['email']
-            password = form.cleaned_data['password']
-
-            # Đăng nhập vào Multilogin và lấy token
-            token = signin(email, password)
-            if token:
-                data = profile_search()
-                for profile in data:
-                    multilogin_account, created = MultiloginAccount.objects.get_or_create(
-                        user=request.user,
-                        profile_id=profile.get('id', ''),
-                        defaults={
-                            'email': email,
-                            'password': password,
-                            'folder_id': profile.get('folder_id', ''),
-                            'profile_name': profile.get('name', '')
-                        }
-                    )
-                    if not created:
-                        # Cập nhật thông tin nếu tài khoản đã tồn tại
-                        multilogin_account.email = email
-                        multilogin_account.password = password
-                        multilogin_account.folder_id = profile.get(
-                            'folder_id', '')
-                        # multilogin_account.multilogin_profile_id = profile.get('id', '')
-                        multilogin_account.profile_name = profile.get(
-                            'name', '')
-                        multilogin_account.save()
-
-                messages.success(request, 'Login success')
-                return redirect('user')
-            else:
+            # sign in multilogin and store current token
+            token = signin(
+                form.cleaned_data['email'], form.cleaned_data['password'])
+            if not token:
                 messages.error(
-                    request, 'Login failed. Please check infomation again')
-    else:
-        form = MultiloginForm()
-    return render(request, 'multilogin.html', {'form': form})
+                    request, "Access multilogin fail. Please try again!")
+                return redirect("index")
+            account, created = Account.objects.update_or_create(
+                user=request.user, email=form.cleaned_data['email'],
+                default={'password': form.cleaned_data['password']}
+            )
+            for profile in profile_search():
+                obj, created = Profile.objects.update_or_create(
+                    account=account,
+                    profile=profile['id'],
+                    defaults={
+                        'folder': profile['folder_id'],
+                        'profile_name': profile['name']
+                    }
+                )
+            messages.success(request, "Access multilogin success")
+            return redirect("index")
+        messages.error(request, "Access multilogin fail. Please try again!")
+        return redirect("index")
+
+
+class ProfileListView(TemplateView):
+    def get_context_data(self, **kwargs) -> TemplateHelper:
+        # A function to init the global layout. It is defined in web_project/__init__.py file
+        context = TemplateLayout.init(self, super().get_context_data(**kwargs))
+
+        return context
+
+
+class ProfileDataView(View):
+    def get(self, request: HttpRequest, *args, **kwargs) -> JsonResponse:
+        data = list(Profile.objects.select_related('account').\
+            filter(account__user=request.user).values(
+            'id', 'name', 'profile', 'folder', 'account__email'
+        ))
+        return JsonResponse(data, safe=False)

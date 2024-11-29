@@ -1,15 +1,16 @@
+# === django import === #
 from django.db import models
-from django.conf import settings
+from django.contrib.auth.models import User
 
 
-class MultiloginAccount(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
-    email = models.EmailField(unique=False)
-    password = models.CharField(max_length=1024)
-    folder_id = models.CharField(max_length=255)
-    profile_id = models.CharField(max_length=255)
-    profile_name = models.CharField(max_length=255, default="")
+class Account(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    email = models.EmailField()
+    password = models.CharField()
 
-    class Meta:
-        unique_together = None
+
+class Profile(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    folder = models.CharField()
+    profile = models.CharField()
+    name = models.CharField(null=True, blank=True)

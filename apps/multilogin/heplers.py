@@ -1,5 +1,8 @@
+# === django import === #
+from django.conf import settings
+
+# === python import === #
 from selenium import webdriver
-from ..users.env import MLX_BASE, MLX_LAUNCHER, LOCALHOST
 import hashlib
 import requests
 import json
@@ -17,7 +20,7 @@ def signin(email: str, password: str) -> str:
         'password': hashlib.md5(password.encode()).hexdigest()
     }
 
-    r = requests.post(f'{MLX_BASE}/user/signin', json=payload)
+    r = requests.post(f'{settings.MLX_BASE}/user/signin', json=payload)
 
     if (r.status_code != 200):
         print(f'\nError during login: {r.text}\n')
@@ -25,26 +28,24 @@ def signin(email: str, password: str) -> str:
 
     response = r.json()['data']
 
-    token = response['token']
-    print(f'MultiloginX token: {token}')
-    HEADERS.update({"Authorization": f'Bearer {token}'})
+    HEADERS.update({"Authorization": f'Bearer {response['token']}'})
 
-    return token
+    return response['token']
 
 
 def profile_search():
     body = {"offset": 0, "limit": 10, "search_text": "", "tags": [
     ], "storage_type": "all", "is_removed": False, "order_by": "created_at", "sort": "desc"}
-    r = requests.post(f'{MLX_BASE}/pss/search',
-                      headers=HEADERS, data=json.dumps(body))
-    response = r.json()
-    print(response)
-    return response.get('data').get('profiles', [])
+    r = requests.post(
+        f'{settings.MLX_BASE}/pss/search', headers=HEADERS, data=json.dumps(body))
+    return r.json().get('data').get('profiles', [])
 
 
 def start_profile(ChromiumOptions, profile_id, folder_id, host, token) -> webdriver:
     r = requests.get(
-        f'{MLX_LAUNCHER}/profile/f/{folder_id}/p/{profile_id}/start?automation_type=selenium', headers={"Authorization": f'Bearer {token}'})
+        f'{settings.MLX_LAUNCHER}/profile/f/{folder_id}/p/{profile_id}/start?automation_type=selenium',
+        headers={"Authorization": f'Bearer {token}'}
+    )
 
     response = r.json()
 
@@ -60,7 +61,9 @@ def start_profile(ChromiumOptions, profile_id, folder_id, host, token) -> webdri
 
 def stop_profile(profile_id, token) -> None:
     r = requests.get(
-        f'https://launcher.mlx.yt:45001/api/v1/profile/stop/p/{profile_id}', headers={"Authorization": f'Bearer {token}'})
+        f'https://launcher.mlx.yt:45001/api/v1/profile/stop/p/{profile_id}',
+        headers={"Authorization": f'Bearer {token}'}
+    )
     if (r.status_code != 200):
         print(f'\nError while stopping profile: {r.text}\n')
     else:

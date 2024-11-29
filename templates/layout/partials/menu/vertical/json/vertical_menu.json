@@ -1,10 +1,10 @@
 {
   "menu": [
     {
-      "name": "Dashboards",
+      "name": "Profiles",
       "url": "index",
       "icon": "menu-icon tf-icons ri-home-smile-line",
-      "slug": "dashboard",
+      "slug": "profile",
       "badge": [
         "danger",
         "5"

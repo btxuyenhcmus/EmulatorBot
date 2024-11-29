@@ -1,0 +1,61 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}Profiles{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/flatpickr/flatpickr.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-checkboxes-jquery/datatables.checkboxes.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/@form-validation/form-validation.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/sweetalert2/sweetalert2.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/flatpickr/flatpickr.js' %}"></script>
+<script src="{% static 'vendor/libs/moment/moment.js' %}"></script>
+<script src="{% static 'vendor/libs/cleavejs/cleave.js' %}"></script>
+<script src="{% static 'vendor/libs/datatables-bs5/datatables-bootstrap5.js' %}"></script>
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/popular.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/bootstrap5.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/auto-focus.js' %}"></script>
+<script src="{% static 'vendor/libs/sweetalert2/sweetalert2.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_css %}
+{{ block.super }}
+{% endblock page_css%}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/profile-all.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+<!-- Profile List Table -->
+<div class="card">
+  <div class="card-datatable table-responsive">
+    <table class="datatables-profiles table" get="{% url 'profiles-data' %}">
+      <thead>
+        <tr>
+          <th></th>
+          <th></th>
+          <th>Name</th>
+          <th>Profile Id</th>
+          <th>Folder Id</th>
+          <th>Account</th>
+          <th class="cell-fit">Action</th>
+        </tr>
+      </thead>
+    </table>
+  </div>
+</div>
+{% endblock %}
