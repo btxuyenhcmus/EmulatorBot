@@ -1,0 +1,25 @@
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasMultiloginAdd" aria-labelledby="offcanvasMultiloginAddLabel">
+	<div class="offcanvas-header border-bottom">
+		<h5 id="offcanvasMultiloginAddLabel" class="offcanvas-title">Access Multilogin Account</h5>
+		<button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+	</div>
+	<div class="offcanvas-body mx-0 flex-grow-0">
+		<form class="multilogin-add pt-0" id="MultiloginAddForm" method="POST" post="{% url 'multilogin' %}" redirect="{% url 'index' %}">
+			{% csrf_token %}
+			<div class="multilogin-add-basic mb-5">
+				<div class="form-floating form-floating-outline mb-5">
+					<input type="text" class="form-control" id="multilogin-email" placeholder="@example.com" name="email" aria-label="Email" />
+					<label for="multilogin-email">Email*</label>
+				</div>
+				<div class="form-floating form-floating-outline mb-5">
+					<input type="text" class="form-control" id="multilogin-password" placeholder="********" name="password" aria-label="Password"/>
+					<label for="multilogin-password">Password*</label>
+				</div>
+			</div>
+			<div>
+				<button type="submit" class="btn btn-primary me-3 data-submit">Access</button>
+				<button type="reset" class="btn btn-outline-danger" data-bs-dismiss="offcanvas">Discard</button>
+			</div>
+		</form>
+	</div>
+</div>

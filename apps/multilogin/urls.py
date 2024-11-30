@@ -18,7 +18,7 @@ urlpatterns = [
         name="profiles-data",
     ),
     path(
-        "login/",
+        "multilogin/login/",
         login_required(LoginView.as_view()),
         name="multilogin"
     ),

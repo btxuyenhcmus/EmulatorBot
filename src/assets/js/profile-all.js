@@ -26,7 +26,8 @@ $(function () {
     var dt_profile = dt_profile_table.DataTable({
       ajax: {
         url: dt_profile_table.attr('get'),
-        type: 'GET'
+        type: 'GET',
+        dataSrc: ""
       },
       columns: [
         { data: '' },
@@ -34,7 +35,7 @@ $(function () {
         { data: 'name' },
         { data: 'profile' },
         { data: 'folder' },
-        { data: 'account__name' },
+        { data: 'account__email' },
         { data: 'action' },
       ],
       columnDefs: [
@@ -95,7 +96,7 @@ $(function () {
               '<div class="d-flex align-items-center">' +
               '<span data-item-id="' +
               full['id'] +
-              '" class="btn btn-sm btn-icon btn-text-secondary waves-effect waves-light rounded-pill"  data-bs-placement="top" title="Preview"><i class="ri-eye-line ri-20px"></i></span>' +
+              '" class="btn btn-sm btn-icon btn-text-secondary waves-effect waves-light rounded-pill"  data-bs-placement="top" title="Preview"><i class="ri-play-line ri-20px"></i></span>' +
               '</div>'
             );
           }
@@ -268,7 +269,7 @@ $(function () {
           className: 'add-new btn btn-primary waves-effect waves-light',
           attr: {
             'data-bs-toggle': 'offcanvas',
-            'data-bs-target': '#offcanvasEbillAdd'
+            'data-bs-target': '#offcanvasMultiloginAdd'
           }
         }
       ],

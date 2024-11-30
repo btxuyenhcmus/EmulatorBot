@@ -14,33 +14,34 @@ from web_project.template_helpers.theme import TemplateHelper
 
 
 class LoginView(View):
-    def post(self, request: HttpRequest, *args, **kwargs):
+    def post(self, request: HttpRequest, *args, **kwargs) -> JsonResponse:
         form = MultiloginForm(request.POST)
         if form.is_valid():
             # sign in multilogin and store current token
             token = signin(
                 form.cleaned_data['email'], form.cleaned_data['password'])
             if not token:
-                messages.error(
-                    request, "Access multilogin fail. Please try again!")
-                return redirect("index")
+                return JsonResponse(
+                    data={'message': "Access multilogin fail."}, status=403)
             account, created = Account.objects.update_or_create(
                 user=request.user, email=form.cleaned_data['email'],
-                default={'password': form.cleaned_data['password']}
+                defaults={'password': form.cleaned_data['password']}
             )
+            count = 0
             for profile in profile_search():
                 obj, created = Profile.objects.update_or_create(
                     account=account,
                     profile=profile['id'],
                     defaults={
                         'folder': profile['folder_id'],
-                        'profile_name': profile['name']
+                        'name': profile['name']
                     }
                 )
-            messages.success(request, "Access multilogin success")
-            return redirect("index")
-        messages.error(request, "Access multilogin fail. Please try again!")
-        return redirect("index")
+                count += created
+            return JsonResponse(
+                data={'message': "Access multilogin success."}, status=201)
+        return JsonResponse(
+            data={'message': "Access multilogin fail."}, status=403)
 
 
 class ProfileListView(TemplateView):
@@ -53,8 +54,8 @@ class ProfileListView(TemplateView):
 
 class ProfileDataView(View):
     def get(self, request: HttpRequest, *args, **kwargs) -> JsonResponse:
-        data = list(Profile.objects.select_related('account').\
-            filter(account__user=request.user).values(
+        data = list(Profile.objects.select_related('account').
+                    filter(account__user=request.user).values(
             'id', 'name', 'profile', 'folder', 'account__email'
         ))
         return JsonResponse(data, safe=False)
